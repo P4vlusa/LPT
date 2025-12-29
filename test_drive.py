@@ -4,7 +4,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 # --- ĐIỀN ID THƯ MỤC CỦA BẠN VÀO ĐÂY ---
-PARENT_FOLDER_ID = '1H_xxxxxxxxxxxxxxxxxxxxxx'  # <--- NHỚ THAY ID VÀO ĐÂY
+PARENT_FOLDER_ID = '1udCflvt7ujbLCDS2cU1YtNZ9K58i84q5'  # <--- NHỚ THAY ID VÀO ĐÂY
 SERVICE_ACCOUNT_FILE = 'service_account.json'
 
 def test_upload():
