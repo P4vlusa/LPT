@@ -33,7 +33,7 @@ MASTER_SHEET_ID = 'THAY_ID_SHEET_CUA_BAN_VAO_DAY'
 MAX_WORKERS = 3
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-SERVICE_ACCOUNT_FILE = os.path.join(CURRENT_DIR, 'service_account.json')
+SERVICE_ACCOUNT_FILE = r'C:\Users\Pavlusa\OneDrive\Work\Python\Google_Token\service_account.json'
 FOLDER_CONFIG = os.path.join(CURRENT_DIR, 'configs')
 
 # ==============================================================================
