@@ -67,17 +67,19 @@ def upload_to_sheet(client, dealer_name, data_rows):
         
         # Ghi dữ liệu (Dùng update cho nhanh)
         # Header
-        header = ["Time", "Product", "Price", "Status", "URL"]
+        header = ["Date", "Time", "Dealer", "Product", "Price", "Status", "URL"]
         
         # Chuẩn bị mảng dữ liệu để đẩy lên 1 lần (Batch update)
         all_values = [header]
         for item in data_rows:
             row = [
-                item['Time'],
-                item['Product'],
-                item['Price'],
-                item['Status'],
-                item['URL']
+                current_date_str,   # Cột 1: Ngày
+                item['Time'],       # Cột 2: Giờ
+                dealer_name,        # Cột 3: Tên đại lý
+                item['Product'],    # Cột 4: Tên SP
+                item['Price'],      # Cột 5: Giá
+                item['Status'],     # Cột 6: Trạng thái
+                item['URL']         # Cột 7: Link
             ]
             all_values.append(row)
             
@@ -201,3 +203,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
