@@ -97,20 +97,33 @@ def upload_to_sheet(client, dealer_name, data_rows):
         print(f"   ❌ Lỗi Upload Sheet: {e}")
 
 def get_driver():
-    """Cấu hình Selenium"""
+    """Cấu hình Selenium CHUẨN cho GitHub Runner"""
     opts = Options()
-    # opts.add_argument("--headless") # Bỏ comment nếu muốn chạy ẩn
+    
+    # --- QUAN TRỌNG: CÁC THAM SỐ CHỐNG CRASH ---
+    
+    # 1. Chạy ẩn (Headless) - Bắt buộc khi chạy qua Runner/Service
+    # Dùng "--headless=new" là chuẩn mới nhất, ổn định hơn bản cũ
+    opts.add_argument("--headless=new") 
+    
+    # 2. Các tham số hệ thống để tránh lỗi "Chrome exited"
     opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-blink-features=AutomationControlled") 
-    opts.add_argument("--window-size=1280,720")
-    # Fake User Agent để đỡ bị chặn
+    opts.add_argument("--disable-dev-shm-usage") # Khắc phục lỗi thiếu bộ nhớ chia sẻ
+    opts.add_argument("--disable-gpu")           # Tắt GPU phần cứng (nguyên nhân gây crash hàng đầu)
+    opts.add_argument("--remote-debugging-port=9222") # Giúp Selenium kết nối ổn định hơn
+    
+    # 3. Giả lập màn hình và User Agent
+    opts.add_argument("--window-size=1920,1080")
     opts.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-    opts.add_argument("--log-level=3") # Tắt log rác
+    opts.add_argument("--log-level=3")
 
     try:
-        return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=opts)
+        # Tự động tải Driver phù hợp với Chrome đang cài trên máy
+        service = Service(ChromeDriverManager().install())
+        return webdriver.Chrome(service=service, options=opts)
     except Exception as e:
         print(f"⚠️ Lỗi khởi tạo Driver: {e}")
+        # Nếu lỗi, thử khởi tạo không cần service (Fallback)
         return webdriver.Chrome(options=opts)
 
 def scrape_product(product):
@@ -209,5 +222,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
