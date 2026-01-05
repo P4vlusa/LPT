@@ -34,7 +34,7 @@ MAX_WORKERS = 4
 # --- CẤU HÌNH ĐƯỜNG DẪN HYBRID ---
 
 # 1. Đường dẫn Key Cố Định (Lấy từ ổ C cho an toàn, không lo lỗi GitHub)
-FIXED_KEY_PATH = r'C:\Users\Pavlusa\OneDrive\Work\Python\Google_Token\service_account.json'
+FIXED_KEY_PATH = r'C:\AutoPrice\service_account.json'
 
 # 2. Đường dẫn Config (Lấy từ thư mục code do GitHub tải về)
 # Lý do: Để bạn có thể cập nhật/thêm bớt link sản phẩm từ xa thông qua GitHub
@@ -172,4 +172,64 @@ def save_to_sheet_safe(data_rows):
     if not data_rows: return
 
     # Kết nối lại client mỗi lần ghi để tránh timeout session
-    client =
+    client = get_google_sheet_client()
+    if not client: return
+
+    # Thử tối đa 5 lần nếu Sheet bận
+    for attempt in range(5):
+        try:
+            sh = client.open_by_key(SPREADSHEET_ID)
+            
+            # Mở Tab, nếu chưa có thì tạo mới
+            try:
+                ws = sh.worksheet(MASTER_SHEET_NAME)
+            except:
+                ws = sh.add_worksheet(title=MASTER_SHEET_NAME, rows=5000, cols=10)
+                ws.append_row(["Ngày", "Thời gian", "Đại lý", "Sản phẩm", "Giá", "Trạng thái", "Link"])
+            
+            # Ngủ ngẫu nhiên 1-5 giây để tránh đụng độ luồng khác
+            time.sleep(random.uniform(1, 5))
+            
+            ws.append_rows(data_rows)
+            print(f"💾 ĐÃ LƯU THÀNH CÔNG {len(data_rows)} DÒNG CỦA ĐẠI LÝ LÊN SHEET!")
+            return
+
+        except Exception as e:
+            wait = random.uniform(5, 10)
+            print(f"⚠️ Sheet bận, chờ {wait:.1f}s... (Lỗi: {e})")
+            time.sleep(wait)
+
+# ==============================================================================
+# 3. CHƯƠNG TRÌNH CHÍNH
+# ==============================================================================
+def main():
+    kill_old_drivers()
+    print(f"📂 Thư mục Configs: {FOLDER_CONFIG}")
+
+    if not os.path.exists(FOLDER_CONFIG):
+        print(f"❌ Không tìm thấy thư mục configs. Hãy kiểm tra lại Repo GitHub!")
+        return
+
+    # Lấy danh sách file json
+    config_files = glob.glob(os.path.join(FOLDER_CONFIG, "*.json"))
+    print(f"🚀 Tìm thấy {len(config_files)} đại lý. Bắt đầu chạy đa luồng...")
+
+    # Sử dụng ThreadPoolExecutor để chạy song song
+    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        # Gửi các lệnh quét đi
+        future_to_file = {executor.submit(scrape_dealer, f): f for f in config_files}
+        
+        # Nhận kết quả khi từng đại lý chạy xong
+        for future in concurrent.futures.as_completed(future_to_file):
+            config_file = future_to_file[future]
+            try:
+                data = future.result()
+                # Có dữ liệu của đại lý nào thì ghi luôn vào Sheet
+                save_to_sheet_safe(data)
+            except Exception as exc:
+                print(f"❌ Đại lý {config_file} bị lỗi nghiêm trọng: {exc}")
+
+    print("\n🎉🎉🎉 TOÀN BỘ QUÁ TRÌNH ĐÃ HOÀN TẤT!")
+
+if __name__ == "__main__":
+    main()
